@@ -1,8 +1,13 @@
 #importaciones
-from fastapi import FastAPI
+#status es para manejar los estados de las respuestas HTTP
+#HTTPException es para manejar las excepciones HTTP y enviar respuestas de error personalizadas
+from fastapi import FastAPI, status, HTTPException
 import asyncio
 #importamos 
 from typing import Optional
+
+#agregar dos nuevas importaciones 
+
 
 #instancia del servidor
 #preparar todo el servidor con laas ventajas que ofrece fastapi 
@@ -52,7 +57,7 @@ async def hola():
 #sera entero es el mas comun 
 #el id que llegue sera entero y para poder pasar la va;idacion tiene que ser entero
 #cuidar las , por que son objetos JSON
-@app.get("/v1/usuario/{id}",tags=["parametro obligatorio"])
+@app.get("/v1/usuarioOb/{id}",tags=["parametro obligatorio"])
 #endpoint de inicio es la ruta con la que arrncara el servidor
 async def consultauno(id:int):
     return{"mesage":"usuario encontrado","usuario":id,"status":"200"}
@@ -69,7 +74,7 @@ async def consultauno(id:int):
     #optional[int]= None puede que venga o no venga un dato y en caso de que no 
     #lo declaramos como nulo
     
-@app.get("/v1/usuarios/",tags=["parametro obligatorio"])
+@app.get("/v1/usuariosOp/",tags=["parametro obligatorio"])
 #endpoint de inicio es la ruta con la que arrncara el servidor
 async def consultatodos(id:Optional[int]=None):
     if id is not None:
@@ -93,4 +98,97 @@ async def consultatodos(id:Optional[int]=None):
     else:
         return{"message":"no se proporciono el id"}
     
+    
+#crear un nuevo endpoint 
+#etiqueta crud http para que se vea en la documentacion que es un endpoint de crud http
+#y con laa funcion consultaT para consultar 
+#todo lo que aremos sera simular las acciones en la tabla que tebemos arriba 
+#creammos un json y contendra status
+
+@app.get("/v1/usuarios/",tags=['CRUD HTTP'])
+async def consultaT():
+    return{
+        # lo que estamos haciendo aqui es simular una consulta a la tabla de usuarios que tenemos arriba
+        #status es el estado de la consulta en este caso 200
+        #total es el total de usuarios que tenemos en la tabla en este caso len(usuarios) nos da el total de usuarios
+        #
+        "status":"200",
+        "total":len(usuarios),
+        "usuarios":usuarios
+          
+    }
+    
+   
+    
+#vamos a hacer un enpoint de tipo post 
+#pueden tener el mismo nombre y no hay conflicto ya que cada uno va a su camino
+#post se usa para crear
+#agregar un nuevo usuario a la tabla de usuarios que tenemos arriba
+#el nuevo usuario lo vamos a recibir en formato json y 
+#lo vamos a agregar a la tabla de usuarios que tenemos arriba
+
+@app.post("/v1/usuarios/",tags=['CRUD HTTP'])  
+async def agregar_usuario(usuario:dict):
+    for usr in usuarios:
+        if usr["id"] == usuario.get("id"):
+            raise HTTPException(
+                status_code=400, 
+                  detail="el id ya existe"
+            )
+    usuarios.append(usuario)
+    return{
+        "nebsaje":"usuario agregado",
+        "Usuario" :usuario,
+        "status":"200"
+    }
+    
+    #hacer put y delete de acuerdo a las funciones anteriores como "create"
+
+#put se usa para actualizar 
+#actualizar un usuario de la tabla de usuarios que tenemos arriba
+#el usuario actualizado lo vamos a recibir en formato json y
+#lo vamos a actualizar en la tabla de usuarios que tenemos arriba
+@app.put("/v1/usuarios/",tags=['CRUD HTTP']) 
+async def actualizar_usuarios(usuario:dict):
+    for usr in usuarios:
+        if usr["id"] == usuario.get("id"):
+            usr.update(usuario)
+            return{
+                "mensaje":"usuario actualizado",
+                "usuario":usr,
+                "status":"200"
+            }
+    raise HTTPException(
+        status_code=404,
+        detail="usuario no encontrado"
+    )
+    
+    
+    
+    #delete se usa para eliminar
+    #eliminar un usuario de la tabla de usuarios que tenemos arriba
+    #el usuario a eliminar lo vamos a recibir en formato json y
+    #lo vamos a eliminar de la tabla de usuarios que tenemos arriba
+@app.delete("/v1/usuarios/",tags=['CRUD HTTP']) 
+#la funcion se llama eliminar_usuario y recibe un id de tipo entero
+async def agregar_usuario(usuario:dict):
+    for usr in usuarios:
+        if usr["id"] == usuario.get("id"):
+            usuarios.remove(usr)
+            return{
+                "mensaje":"usuario eliminado",
+                "usuario":usr,
+                "status":"200"
+            }
+    raise HTTPException(
+        status_code=404,
+        detail="usuario no encontrado"
+    )
+    
+      
+        
+     
+     
+
+
     
