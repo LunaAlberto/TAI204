@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>usuarios</title>
+</head>
+<body>
+    
+    <h2>Lista</h2>
+
+    <table border="1">
+        <tr>
+        
+        <th>id</th>
+         <th>nombre</th>
+          <th>edad</th>
+
+          <th>eliminar</th>
+           
+        </tr>
+    
+        {% for usuario in usuarios %}
+            <tr>
+        <td>{{ usuario.id }}</td>
+        <td>{{ usuario.nombre }}</td>
+        <td>{{ usuario.edad }}</td>
+
+
+        <td>
+            
+            <form action="/eliminar/{{ usuario.id }}" method="POST">
+                <button type="submit">eliminar</button>
+</form>
+
+        </td>
+
+
+         </tr> {% endfor %}
+    </table>
+  
+    <h2>agregar</h2>
+<form action="/agregar" method="POST">
+    <input type="number" name="id" placeholder="ID" required>
+    <input type="text" name="nombre" placeholder="Nombre" required>
+    <input type="number" name="edad" placeholder="Edad" required>
+    <button type="submit">Agregar</button>
+</form>
+
+<h2>editar</h2>
+
+<form action = "/actualizar" method="POST">
+    <input type="number" name="id" placeholder="ID del usuario a editar" required>
+    <input type="text" name="nombre" placeholder="Nuevo nombre" required>
+    <input type="number" name="edad" placeholder="Nueva edad" required>
+    <button type="submit">Actualizar</button>
+</form>
+
+
+</body>
+</html>

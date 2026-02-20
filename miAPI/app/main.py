@@ -184,11 +184,3 @@ async def agregar_usuario(usuario:dict):
         status_code=404,
         detail="usuario no encontrado"
     )
-    
-      
-        
-     
-     
-
-
-    
