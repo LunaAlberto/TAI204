@@ -5,9 +5,13 @@ from fastapi import FastAPI, status, HTTPException
 import asyncio
 #importamos 
 from typing import Optional
-
 #agregar dos nuevas importaciones 
 
+#importamos la libreria de pydantic
+#pydantic nos ayuda a validar los datos que recibimos en el endpoint y nos ayuda 
+# a crear modelos de datos para nuestras respuestas y solicitudes
+from pydantic import BaseModel,Field
+#el Field nos ayuda a agregar validaciones adicionales a los campos de nuestro modelo de datos
 
 #instancia del servidor
 #preparar todo el servidor con laas ventajas que ofrece fastapi 
@@ -25,6 +29,28 @@ usuarios=[
     {"id":2,"nombre":"Diego","edad":20},
     {"id":3,"nombre":"Jochua","edad":20}
 ]
+
+###crear modelo pydantic de validaciones
+#aqui yaa tenemos nuestro modelo pydantic esto es solo paraa crear usuario
+#para que pase la parte del pydantic necesita pasar la validacion de 
+# los datos que recibimos en el endpoint de crear usuario
+class crear_usuario(BaseModel):
+    id:int = Field(..., gt=0, description="identificador de usuario")
+    nombre:str= Field(...,min_length=3, max_length=50, example="Joohn Doe")
+    edad:int=Field(...,gt=1,le=125,description="edad valida entre 1 y 125")
+
+#Field(..., gt=0, description="identificador de usuario") nos ayuda a validar que 
+# el id sea un entero mayor a 0 y le damos una descripcion para la documentacion
+
+#Field(...,min_length=3, max_length=50, example="Joohn Doe") 
+# nos ayuda a validar que el nombre sea una cadena de texto con una longitud minima 
+# de 3 caracteres y una longitud maxima de 50 caracteres y le damos un ejemplo para la documentacion
+
+#Field(...,gt=1,le=125,description="edad valida entre 1 y 125") nos ayuda a
+# validar que la edad sea un entero mayor a 1 y menor o igual a 125 y le damos una
+# descripcion para la documentacion
+
+
 
 
 
@@ -128,16 +154,16 @@ async def consultaT():
 #lo vamos a agregar a la tabla de usuarios que tenemos arriba
 
 @app.post("/v1/usuarios/",tags=['CRUD HTTP'])  
-async def agregar_usuario(usuario:dict):
+async def agregar_usuario(usuario:crear_usuario):
     for usr in usuarios:
-        if usr["id"] == usuario.get("id"):
+        if usr["id"] == usuario.id:
             raise HTTPException(
                 status_code=400, 
                   detail="el id ya existe"
             )
-    usuarios.append(usuario)
+    usuarios.append(usuario.dict())
     return{
-        "nebsaje":"usuario agregado",
+        "mensaje":"usuario agregado",
         "Usuario" :usuario,
         "status":"200"
     }
@@ -163,6 +189,12 @@ async def actualizar_usuarios(usuario:dict):
         detail="usuario no encontrado"
     )
     
+    #ahora por la parte de put este mismo si debe de tener las validaciones de
+    # pydantic para que no se pueda actualizar con datos incorrectos
+    # en este caso ya estamos validando el id en este update si el id que se quiere actualizar 
+    # no existe en la tabla de usuarios entonces se devuelve un error 404 usuario no encontrado
+    
+    
     
     
     #delete se usa para eliminar
@@ -184,3 +216,6 @@ async def agregar_usuario(usuario:dict):
         status_code=404,
         detail="usuario no encontrado"
     )
+    
+    #este valida que ya tenga un id el usuario que se quiere eliminar y si lo encuentra 
+    # lo elimina de la tabla de usuarios y si no lo encuentra devuelve un error 404 usuario no encontrado
