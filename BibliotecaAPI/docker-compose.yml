@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    container_name: server_biblioteca_nuevo
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./app:/app/app
+
+
+
+
+      
