@@ -1,7 +1,16 @@
 #importaciones
 #status es para manejar los estados de las respuestas HTTP
 #HTTPException es para manejar las excepciones HTTP y enviar respuestas de error personalizadas
-from fastapi import FastAPI, status, HTTPException
+
+## objetivo:
+# Cualquiera puede agregar información,
+# pero solo la persona que tiene la contraseña puede eliminarla.
+
+# Depends se usa para poder
+# inyectar dependencias en las funciones por ejemplo, validaciones
+# o autenticación antes de ejecutar una operación.
+
+from fastapi import FastAPI, status, HTTPException,Depends
 import asyncio
 #importamos 
 from typing import Optional
@@ -12,6 +21,24 @@ from typing import Optional
 # a crear modelos de datos para nuestras respuestas y solicitudes
 from pydantic import BaseModel,Field
 #el Field nos ayuda a agregar validaciones adicionales a los campos de nuestro modelo de datos
+
+
+# estas líneas nos ayudan a
+# implementar seguridad básica con usuario y contraseña.
+# HTTPBasic permite usar autenticación básica.
+# HTTPBasicCredentials guarda el usuario y la contraseña enviados.
+
+from  fastapi.security import HTTPBasic, HTTPBasicCredentials
+#libreria que sirve para todo el tema de contrasenas 
+# secrets se usa para comparar contraseñas de forma segura
+# y evitar ataques de comparación directa.
+import secrets
+
+ 
+
+
+
+
 
 #instancia del servidor
 #preparar todo el servidor con laas ventajas que ofrece fastapi 
@@ -29,6 +56,29 @@ usuarios=[
     {"id":2,"nombre":"Diego","edad":20},
     {"id":3,"nombre":"Jochua","edad":20}
 ]
+
+#seguridad con http 
+#necesita un parametro para continuar necesita credenciales 
+
+security = HTTPBasic()
+
+def verificar_peticion(credenciales: HTTPBasicCredentials = Depends(security)):
+
+    usuarioAuth = secrets.compare_digest(credenciales.username, "alberto")
+    contraAuth = secrets.compare_digest(credenciales.password, "123456")
+
+    if not (usuarioAuth and contraAuth):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="credenciales no autorizadas"
+        )
+
+    return credenciales.username
+
+
+
+
+
 
 ###crear modelo pydantic de validaciones
 #aqui yaa tenemos nuestro modelo pydantic esto es solo paraa crear usuario
@@ -201,17 +251,19 @@ async def actualizar_usuarios(usuario:dict):
     #eliminar un usuario de la tabla de usuarios que tenemos arriba
     #el usuario a eliminar lo vamos a recibir en formato json y
     #lo vamos a eliminar de la tabla de usuarios que tenemos arriba
-@app.delete("/v1/usuarios/",tags=['CRUD HTTP']) 
-#la funcion se llama eliminar_usuario y recibe un id de tipo entero
-async def agregar_usuario(usuario:dict):
+    
+    
+@app.delete("/v1/usuarios/", tags=['CRUD HTTP'])
+async def eliminar_usuario(id: int, usuarioAuth: str = Depends(verificar_peticion)):
+
     for usr in usuarios:
-        if usr["id"] == usuario.get("id"):
+        if usr["id"] == id:
             usuarios.remove(usr)
-            return{
-                "mensaje":"usuario eliminado",
-                "usuario":usr,
-                "status":"200"
+            return {
+                "mensaje": f"usuario eliminado por {usuarioAuth}",
+                "status": 200
             }
+
     raise HTTPException(
         status_code=404,
         detail="usuario no encontrado"
