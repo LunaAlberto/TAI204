@@ -2,8 +2,11 @@ import asyncio
 #importamos 
 from typing import Optional
 
-from app.data.database import usuarios
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.data.db import get_db
+from app.data.usuario import Usuarios as usuarioDB
 
 routerV = APIRouter(
     prefix="/varios", 
@@ -24,25 +27,41 @@ async def hola():
            "status":"200"
     }
     
-@routerV.get("/usuario{id}")
-async def consultauno(id:int):
-    return{"mesage":"usuario encontrado","usuario":id,"status":"200"}
-          
-           
+@routerV.get("/usuario/{id}")
+async def consultauno(id: int, db: Session = Depends(get_db)):
+    usuario = db.query(usuarioDB).filter(usuarioDB.id == id).first()
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="usuario no encontrado")
+
+    return {
+        "message": "usuario encontrado",
+        "usuario": usuario
+    }      
+
+
+
            
 @routerV.get("/buscar")
+async def consultatodos(id: Optional[int] = None, db: Session = Depends(get_db)):
 
-async def consultatodos(id:Optional[int]=None):
     if id is not None:
+        usuario = db.query(usuarioDB).filter(usuarioDB.id == id).first()
+
+        if not usuario:
+            return {"message": "usuario no encontrado"}
+
+        return {
+            "message": "usuario encontrado",
+            "usuario": usuario
+        }
+
+    usuarios = db.query(usuarioDB).all()
+
+    return {
+        "message": "lista de usuarios",
+        "total": len(usuarios),
+        "usuarios": usuarios
+    }
     
-        
-        for usuarioK in usuarios:
-            if usuarioK["id"] == id:
-             return{"mesage":"usuario encontrado", "usuario":usuarioK,"status":"200"}
-         
-            
-        return {"mesage":"usuario no encontrado"}
     
-    
-    else:
-        return{"message":"no se proporciono el id"}
